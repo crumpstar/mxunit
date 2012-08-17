@@ -171,10 +171,11 @@
 
      if (!registry.isPattern(missingMethodArguments)){ //pee-yew!
       try{
-       //To Do: record the literal and invoke pattern behavior
-       //Record both if they exist. This will help for lookups
-       tempMock = registry.findByPattern(missingMethodName,missingMethodArguments);
-       return _$invokeMock(tempMock['missingMethodName'],tempMock['missingMethodArguments']);
+
+       tempMock = registry.findByPattern(missingMethodName,missingMethodArguments);       
+       //We only get here if the literal arguments match an existing registered pattern
+       //pass in the orginal arguments to the invoke and the matched pattern so both can be recorded
+       return _$invokeMock(tempMock['missingMethodName'], missingMethodArguments, tempMock['missingMethodArguments']);
       }
       catch(MismatchedArgumentPatternException e){
        // If we get here, it's because we're registering the method
@@ -185,9 +186,18 @@
 
    //Now we try to register the mock.
      _$setState('registering');
-     registry.register(missingMethodName,missingMethodArguments); //could return id
+     registry.register(missingMethodName,missingMethodArguments); //could return id    
      currentMethod['name'] = missingMethodName;
      currentMethod['missingMethodArguments'] = missingMethodArguments;
+     currentMethod['invocationRecordId'] = 0;
+      //this is so that the invocation record can be removed if this is really a registration
+     if (!registry.isPattern(missingMethodArguments)){
+     	//only add invocation record for literals
+     		//call the invoke because techinially the method was invoked,  
+     		//the invoke will be responsible for setting the [invocationRecordID] and .returns will be responsible for removing
+     		//for calls that are properly registered with .retuns()
+     	     _$invokeMock(missingMethodName,missingMethodArguments, ''); 
+     }
      // what logic can we implement to simply return '' if not mocked? _AND_
      // implement chaining?
      return this;
@@ -196,8 +206,8 @@
    else{
     _$setState('executing');
     currentMethod = {};
-    try{
-     retval = _$invokeMock(missingMethodName,missingMethodArguments);
+    try{    
+     retval = _$invokeMock(missingMethodName,missingMethodArguments, '');
     }
     catch(UnmockedBehaviorException e){
       retval = chr(0);
@@ -230,11 +240,20 @@
    _$setState('idle');
    if( arguments.size() ) arg = arguments[1];
    registry.updateRegistry(currentMethod['name'],currentMethod['missingMethodArguments'],'returns',arg);
+   //check to see if we need to remove the invocation record...
+   if(structKeyExists(currentMethod, "invocationRecordId") && currentMethod['invocationRecordId'] NEQ 0){
+   	registry.removeInvocationRecordById(currentMethod['invocationRecordId']);   
+   }
+   
    return this;
   }
 
   function throws(type){
    registry.updateRegistry(currentMethod['name'],currentMethod['missingMethodArguments'],'throws',type);
+   //check to see if we need to remove the invocation record...
+   if(structKeyExists(currentMethod, "invocationRecordId") && currentMethod['invocationRecordId'] NEQ 0){
+   	registry.removeInvocationRecordById(currentMethod['invocationRecordId']);   
+   }
    return this;
   }
 
@@ -328,12 +347,16 @@
   return variables;
  }
 
-  function _$invokeMock(target,args){
-    var behavior = registry.getRegisteredBehavior(target,args);
-
-    if(behavior == 'returns') return registry.getReturnsData(target,args);
-    if(behavior == 'throws')  _$throw(registry.getReturnsData(target,args));
-
+  function _$invokeMock(target,args, pattern){
+//only place we need the switch args/pattern the only reason this gets called with a valid pattern is because it was matched
+//otherwise its a litteral call and the addInvocationRecord call will take care of building the pattern for the invocationRecord
+//so use the pattern to get the data, as it was already recorded
+	var lookupArgs = (isDefined('pattern') && registry.isPattern(pattern))? pattern: args;
+    var behavior = registry.getRegisteredBehavior(target,lookupArgs);  
+    currentMethod['invocationRecordId'] = registry.addInvocationRecord(target,args,'ok',pattern);        
+    if(behavior == 'returns') return registry.getReturnsData(target,lookupArgs);
+    if(behavior == 'throws')  _$throw(registry.getReturnsData(target,lookupArgs));
+    
   }
 
   function _$debugReg(){

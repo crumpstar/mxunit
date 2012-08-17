@@ -53,8 +53,8 @@ function doVerify(verifyMethod, target, args, expected, mockreg){
  }
 
 
-function _$getActual(target,args,mockreg){
-  var rows = mockreg.getInvocationRecordsById(target,args);
+function _$getActual(target,args,mockreg){	
+  var rows = mockreg.getInvocationRecords(target,args);
   return rows.recordCount;
 }
 
@@ -127,7 +127,7 @@ function _$getActual(target,args,mockreg){
 
 
  function _$buildMessage(rule, target, args, expected, mockreg){
-  var calls = mockreg.getInvocationRecordsById(target,args).recordCount;
+  var calls = _$getActual(target,args, mockreg);
   var details = '';
   details &= 'Expected #target#( w/#args.size()# arguments ) to be verfied using rule "#rule#" ';
   details &=  ': , but #target#(...) was called #calls# time(s).';

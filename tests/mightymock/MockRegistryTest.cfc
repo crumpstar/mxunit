@@ -185,11 +185,21 @@ function testGetInvocationsById(){
 }
 
 function getRegisteredBehaviorThrows(){
-  mr.register('foo',args);
+	
+  //var patternArg = {foo='{string}'};
+  	
+  mr.register('foo',args);  
   mr.updateRegistry('foo',args,'throws', 'myexception');
+  //add new pattern matching test
+  
+  //mr.register('foo',{foo="{string}"});
+  
+  //tests  
   actual = mr.getRegisteredBehavior('foo',args);
   debug(mr.getRegistry());
   assertEquals('throws',actual);
+  
+  
 }
 
 function getRegisteredBehavior(){

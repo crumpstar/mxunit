@@ -203,6 +203,69 @@ function argumentMatcherShouldFailWithUnMatchedNumberOfArgs(){
   }
 }
 
+
+function shouldMatchArgumentTypes(){
+	
+	assertEquals('{date}', matcher.getArgumentType(now()));
+	assertEquals('{object}', matcher.getArgumentType(this));
+	assertEquals('{struct}', matcher.getArgumentType({'foo'="bar"}));
+	assertEquals('{udf}', matcher.getArgumentType(this.setUp));
+	assertEquals('{numeric}', matcher.getArgumentType(1000));
+	assertEquals('{numeric}', matcher.getArgumentType(100.0));
+	assertEquals('{numeric}', matcher.getArgumentType(100.0125));
+	assertEquals('{numeric}', matcher.getArgumentType(10000000000000000000000000));
+	assertEquals('{array}', matcher.getArgumentType(a));
+	assertEquals('{query}', matcher.getArgumentType(q));
+	assertEquals('{xml}', matcher.getArgumentType(x));
+	assertEquals('{boolean}', matcher.getArgumentType(true));
+	assertEquals('{binary}', matcher.getArgumentType(toBinary(toBase64('stringer'))));
+	assertEquals('{image}', matcher.getArgumentType(imageNew()));
+	assertEquals('{string}', matcher.getArgumentType('stringer'));
+
+	
+//TODO:Figure out how to more reliably determine types as CF sees numbers and booleans as strings	
+	//assertEquals('{boolean}', matcher.getArgumentType(1));
+	//assertEquals('{string}', matcher.getArgumentType('true'));	
+	//assertEquals('{string}', matcher.getArgumentType('1000'));
+	
+}
+
+
+function shouldMatchLiteralWithPatternMix(){
+	var literals = [{1='{numeric}',2='{numeric}',3='{string}',4='{numeric}'},
+					{1=1,2='{numeric}',3='{string}',4='{numeric}'},
+					{1=1,2=2,3='{string}',4='{numeric}'},
+					{1=1,2=2,3='{string}',4=4},
+					{1=1,2=2,3='word',4=4},
+					{1='{any}',2=2,3='{string}',4=4},
+					{1='{any}',2=2,3='{any}',4=4},
+					{1='{any}',2='{any}',3='{any}',4='{any}'}];
+	var pattern = createObject('java','java.util.TreeMap').init({1='{numeric}',2='{numeric}',3='{string}',4='{numeric}'}); 
+	var literal = {};
+	for (literal in literals){
+		   assert( matcher.match(createObject('java','java.util.TreeMap').init(literal),pattern) );
+		};
+	literal = {1='{date}',2='{object}',3='{struct}',4='{udf}',
+	5=1000,6='{array}',7='{xml}',8='{boolean}',9='{binary}',10='{image}',11='{string}'};
+	pattern = createObject('java','java.util.TreeMap').init(
+	{1='{date}',2='{object}',3='{struct}',4='{udf}',
+	5='{numeric}',6='{array}',7='{xml}',8='{boolean}',9='{binary}',10='{image}',11='{string}'}
+	);
+	
+	assert( matcher.match(createObject('java','java.util.TreeMap').init(literal),pattern) );
+	
+}
+
+function argumentMatcherBuildPatternFromArguments(){
+  var expected = {1='{date}', 2='{object}', 3='{struct}', 4='{udf}', 5='{numeric}', 6='{array}',
+                  7='{query}', 8='{xml}', 9='{boolean}', 10='{binary}', 11='{image}', 12='{string}'};
+                  
+  var input = {1=now(), 2=this, 3={'foo'='bar'}, 4=this.setUp, 5=1, 6=a,
+               7=q, 8=x, 9=true, 10=toBinary(toBase64('stringer')), 11=imageNew(), 12='stringer'};
+  assertEquals(expected, matcher.buildPatternFromArguments(input));
+  
+}
+
 function $matchOrderedArgsShouldWork(){
    var actual = false;
    var incomming = { 1='bar', 2=321654};

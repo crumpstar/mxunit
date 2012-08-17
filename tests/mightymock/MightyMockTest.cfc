@@ -30,9 +30,9 @@ function clearOrResetMock(){
 
 
 function simpleVerifyTest(){
+//register new mock method
   mock.foo('asd').returns('asd');
-
-  mock.foo('asd');
+  mock.foo('asd');  
   mock.verifyTimes(1).foo('asd');
 
 
@@ -57,8 +57,109 @@ function simpleVerifyTest(){
 
 }
 
+function literalVerifyPatternTest(){
+	
+	//mock.literal(q).returns(q);
+	
+	
+//register new mock method
+	mock.literal('asd').returns('asd');
+	debug(mock.debugMock());
+	//should never have been called yet
+	mock.verifyNever().literal('{string}');
+	assertEquals('asd', mock.literal('asd'));
+	//should pass as it has now been called once
+	mock.verify().literal('{string}');
+	mock.verify().literal('{+}');
+	mock.verify().literal('{*}');
+	mock.verify().literal('{any}');
+	//simulate the mock being called with an unregistered signature
+	mock.literal('dsa');
+	mock.verifyTimes(2).literal('{string}');
+	mock.verifyTimes(2).literal('{+}');
+	mock.verifyTimes(2).literal('{*}');
+	mock.verifyTimes(2).literal('{any}');
+	//simulate the mock being called with completely different argument type
+	mock.literal(true);
+	
+	//mock._$getRegistry().getInvocationRecords('literal', {1='{string}'}, true);
+	
+	mock.verifyTimes(2).literal('{string}');
+	mock.verifyTimes(3).literal('{+}');
+	mock.verifyTimes(3).literal('{*}');
+	mock.verifyTimes(3).literal('{any}');
+	//simulate the mock being called with no arguments this should increase the count
+	//for 0+ wildcard but leave the count for 1+ wild card
+	mock.literal();
+	mock.verifyTimes(3).literal('{+}');
+	mock.verifyTimes(4).literal('{*}');
+	mock.verifyTimes(3).literal('{any}');
+	//now lets crazy and really streatch the legs of the pattern matching
+	mock.literal(now(),
+				 this,
+				 {'foo'="bar"},
+				 this.setUp,
+				 1000,
+				 a,
+				 x,
+				 true,
+				 toBinary(toBase64('stringer')),
+				 imageNew(),
+				 'stringer'
+				 );
+	//first and foremost the wildcars should have increased by one				 
+	mock.verifyTimes(4).literal('{+}');
+	mock.verifyTimes(5).literal('{*}');
+	//a single argument should have stayed the same
+	//mock._$getRegistry().getInvocationRecordsByPattern('literal', {1='{any}'}, true);
+	
+	mock.verifyTimes(3).literal('{any}');
+	mock.verifyTimes(2).literal('{string}');
+	//the following should have never been called because it was never called with these single arg
+	mock.verifyNever().literal('{date}');
+	mock.verifyNever().literal('{object}');
+	mock.verifyNever().literal('{struct}');
+	mock.verifyNever().literal('{udf}');
+	mock.verifyNever().literal('{numeric}');
+	mock.verifyNever().literal('{array}');
+	mock.verifyNever().literal('{query}');
+	mock.verifyNever().literal('{xml}');
+	//check above we did call it with a boolean ;-)
+	mock.verify().literal('{boolean}');
+	mock.verifyNever().literal('{binary}');
+	//mock._$getRegistry().getInvocationRecordsByPattern('literal', {1='{image}'}, true);
+	mock.verifyNever().literal('{image}');
+	//verify some mixed patterns
+	mock.verify().literal('{date}','{object}','{struct}','{udf}','{numeric}','{array}','{xml}','{boolean}','{binary}','{image}','{string}');
+	mock.verify().literal('{any}','{object}','{struct}','{udf}','{numeric}','{array}','{xml}','{boolean}','{binary}','{image}','{string}');
+	mock.verify().literal('{any}','{object}','{any}','{udf}','{any}','{array}','{any}','{boolean}','{any}','{image}','{any}');
+	mock.verify().literal('{date}','{object}','{struct}','{udf}',1000,'{array}','{xml}','{boolean}','{binary}','{image}','{string}');
+	mock.verify().literal('{date}', this,{'foo'="bar"},'{udf}',1000,'{any}',x,true,toBinary(toBase64('stringer')),imageNew(),'{any}');
+	mock.verify().literal('{any}', '{any}','{any}','{any}','{any}','{any}','{any}','{any}','{any}','{any}','{any}');
+	
+	
+}
 
 
+function patternVerifyLiteralTest(){
+	
+//register new mock method
+	mock.pattern('{string}').returns('value');
+	debug(mock.debugMock());
+	//should never have been called yet
+	mock.verifyNever().pattern('arg1');
+	assertEquals('value', mock.pattern('arg1'));
+	//should pass as it has now been called once
+	mock.verify().pattern('{string}');
+	mock.pattern('arg2');
+	mock.verifyTimes(2).pattern('{string}');
+	mock.verifyTimes(1).pattern('arg1');
+	mock.verifyTimes(1).pattern('arg2');
+	mock.verifyTimes(2).pattern('{+}');
+	mock.verifyTimes(2).pattern('{*}');
+	mock.verifyNever().pattern();
+	
+}
 
 
  function testRegisterNewMock(){

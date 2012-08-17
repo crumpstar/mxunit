@@ -16,12 +16,16 @@
     m1.foo().returns('bah');
     assert( m1.foo() == 'bah');
 
-    m1.reset();
+    m1.reset();    
     m1.writeToLog ('Hello.');
     m1.writeToLog ('Goodbye.');
+// acrum commented this out because of the new pattern matching
+// the old way this would pass because the first call was considerd a register
+//and these calls would be considered as invokes  However this makes the verify
+//unreliable as you can never ensure that the CUT will not invoke your mock with
 
-    m1.writeToLog ('Hello.');
-    m1.writeToLog ('Goodbye.');
+//    m1.writeToLog ('Hello.');
+//    m1.writeToLog ('Goodbye.');
 
     m1.verify().writeToLog ('Hello.');
     m1.verify().writeToLog ('Goodbye.');
