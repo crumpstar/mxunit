@@ -1,4 +1,4 @@
-<cfcomponent output="false">
+<cfcomponent output="true">
 <!---
   You'll see target and args used throughout. target is the method name
   and args is the struct representing the arguments. These are used

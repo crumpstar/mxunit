@@ -95,6 +95,7 @@ function literalVerifyPatternTest(){
 	mock.verifyTimes(4).literal('{*}');
 	mock.verifyTimes(3).literal('{any}');
 	//now lets crazy and really streatch the legs of the pattern matching
+	
 	mock.literal(now(),
 				 this,
 				 {'foo'="bar"},
@@ -145,19 +146,73 @@ function patternVerifyLiteralTest(){
 	
 //register new mock method
 	mock.pattern('{string}').returns('value');
-	debug(mock.debugMock());
 	//should never have been called yet
 	mock.verifyNever().pattern('arg1');
+	mock.verifyNever().pattern('{string}');
+	mock.verifyNever().pattern('{boolean}');
+	mock.verifyNever().pattern('{any}');
+	mock.verifyNever().pattern('{*}');
+	mock.verifyNever().pattern('{+}');
+//simulate CUT calling Mock	
 	assertEquals('value', mock.pattern('arg1'));
 	//should pass as it has now been called once
 	mock.verify().pattern('{string}');
-	mock.pattern('arg2');
-	mock.verifyTimes(2).pattern('{string}');
-	mock.verifyTimes(1).pattern('arg1');
-	mock.verifyTimes(1).pattern('arg2');
-	mock.verifyTimes(2).pattern('{+}');
-	mock.verifyTimes(2).pattern('{*}');
+	mock.verify().pattern('arg1');
+	mock.verify().pattern('{*}');
+	mock.verify().pattern('{+}');
+	mock.verifyNever().pattern('{boolean}');
 	mock.verifyNever().pattern();
+//Simulate the cut calling mock with unregistered params
+	mock.pattern(1000);
+	mock.verify().pattern('{string}');
+	mock.verify().pattern('arg1');
+	mock.verifyTimes(2).pattern('{any}');
+	mock.verifyTimes(2).pattern('{*}');
+	mock.verify(2).pattern('{+}');
+	mock.verifyNever().pattern('{boolean}');
+	mock.verifyNever().pattern();
+	//now lets crazy and really streatch the legs of the pattern matching	
+	mock.pattern('{date}','{object}','{struct}','{udf}','{numeric}','{array}','{xml}','{boolean}','{binary}','{image}','{string}').returns('booya');
+	//first and foremost the everything should remain the same as we didn't call it				 
+	mock.verify().pattern('{string}');
+	mock.verify().pattern('arg1');
+	mock.verifyTimes(2).pattern('{any}');
+	mock.verifyTimes(2).pattern('{*}');
+	mock.verify(2).pattern('{+}');
+	mock.verifyNever().pattern('{boolean}');
+	mock.verifyNever().pattern();
+	//simulate CUT callin Mock
+//Query and udf seem to fubar things because of byref vs byval	
+	mock.pattern(now(),
+				 this,
+				 {'foo'="bar"},
+				 1000,
+				 a,
+				 x,
+				 true,
+				 toBinary(toBase64('stringer')),
+				 imageNew(),
+				 'stringer'
+				 );	
+	//the following should have never been called because it was never called with these single arg
+	mock.verifyNever().literal('{date}');
+	mock.verifyNever().literal('{object}');
+	mock.verifyNever().literal('{struct}');
+	mock.verifyNever().literal('{udf}');
+	mock.verifyNever().literal('{numeric}');
+	mock.verifyNever().literal('{array}');
+	mock.verifyNever().literal('{query}');
+	mock.verifyNever().literal('{xml}');
+	mock.verifyNever().literal('{binary}');
+	mock.verifyNever().literal('{image}');
+	//verify some mixed patterns
+	mock.verify().pattern('{date}','{object}','{struct}','{numeric}','{array}','{xml}','{boolean}','{binary}','{image}','{string}');
+	mock.verify().pattern('{any}','{object}','{struct}','{numeric}','{array}','{xml}','{boolean}','{binary}','{image}','{string}');
+	mock.verify().pattern('{any}','{object}','{any}','{any}','{array}','{any}','{boolean}','{any}','{image}','{any}');
+	mock.verify().pattern('{date}','{object}','{struct}',1000,'{array}','{xml}','{boolean}','{binary}','{image}','{string}');
+	mock.verify().pattern('{date}', this,{'foo'="bar"},1000,'{any}',x,true,toBinary(toBase64('stringer')),imageNew(),'{any}');
+	mock.verify().pattern('{any}', '{any}','{any}','{any}','{any}','{any}','{any}','{any}','{any}','{any}');
+	
 	
 }
 
