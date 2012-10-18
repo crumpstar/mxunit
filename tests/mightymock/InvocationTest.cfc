@@ -7,6 +7,11 @@ IMPORTANT (7.15.10)
  
 Matching still does not work; 
 
+
+Matching should now be working
+Test cases updated because the expcetion is expected to be thrown at this time
+if the matcher is updated to handle mixing of named and ordered args then these
+test will need to be updated
  --->
 
 <cffunction name="$namedArgumentsOutOfOrderTest">
@@ -25,9 +30,14 @@ Matching still does not work;
   mock.reset();
   mock.foo( a='{string}', b='{boolean}' ).returns('bar');
   debug( mock.debugMock() );
-  actual = mock.foo( 'axel', false );
-  debug( actual );
-  assertEquals('bar', actual ) ;  
+  try {
+    actual = mock.foo( 'axel', false );
+    fail('Should not get here exception should have benn thrown and caught');
+  }
+    catch(NamedArgumentConflictException e){}  
+
+  
+   
 </cfscript>
 </cffunction>	
 	
@@ -35,7 +45,11 @@ Matching still does not work;
  <cfscript>
   mock.reset();
   mock.foo(bar='{string}', foo='{numeric}' ).returns('bar');
-  assertEquals('bar',mock.foo( 'axel', 123 )) ;  
+  try{
+    mock.foo( 'axel', 123 );  
+    fail('Should not get here as the exception is expected to be thrown');
+  }
+  catch(NamedArgumentConflictException e) {} 
 </cfscript>
 </cffunction>
 
@@ -43,7 +57,13 @@ Matching still does not work;
  <cfscript>
   mock.reset();
   mock.foo(bar='{string}', foo='{boolean}' ).returns('bar');
-  assertEquals('bar', mock.foo( 'axel', false )) ;  
+  try{
+    mock.foo( 'axel', false );  
+    fail('Should not get here as the exception is expected to be thrown');
+  }
+  catch(NamedArgumentConflictException e) {
+    ;
+  } 
 </cfscript>
 </cffunction>
 
@@ -53,7 +73,13 @@ Matching still does not work;
  <cfscript>
   mock.reset();
   mock.foo(bar='{string}', foo='{string}' ).returns('bar');
-  assertEquals('bar',mock.foo( 'axel', 'baz' )) ;  
+  try {
+    mock.foo( 'axel', 'baz' );  
+    fail('Should not get here as the exception is expected to be thrown');
+  }
+  catch(NamedArgumentConflictException e) {} 
+  
+  
 </cfscript>
 </cffunction>
 
